@@ -8,25 +8,41 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Accept Android SDK licenses
+      - name: Install dependencies
         run: |
-          yes | sdkmanager --licenses || true
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            python3-venv \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            zlib1g-dev
 
-      - name: Install Android Build Tools
+      - name: Install Buildozer
         run: |
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          python3 -m pip install --upgrade pip
+          python3 -m pip install buildozer cython
+
+      - name: Accept Android licenses
+        run: |
+          mkdir -p "$HOME/.buildozer/android/platform/android-sdk/licenses"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
 
       - name: Build APK
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          workdir: .
-          command: buildozer android debug
+        run: |
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
